@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Temps de Parole — Conseil Municipal de Menton</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --blue: #1a4a8f;
+    --blue-light: #2a5fa8;
+    --blue-pale: #e8f0fb;
+    --blue-mid: #c8d8f4;
+    --gray-50: #f7f8fa;
+    --gray-100: #edf0f4;
+    --gray-200: #dce1e9;
+    --gray-400: #8a95a3;
+    --gray-600: #4a5568;
+    --gray-800: #1a202c;
+    --white: #ffffff;
+    --green: #1a7a4a;
+    --green-pale: #e8f5ee;
+    --red: #c0392b;
+    --red-pale: #fcecea;
+    --active-shadow: 0 0 0 3px rgba(26, 74, 143, 0.18);
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--gray-50);
+    color: var(--gray-800);
+    min-height: 100vh;
+  }
+
+  /* ─── ROUTER ─── */
+  .page { display: none; min-height: 100vh; }
+  .page.active { display: flex; flex-direction: column; }
+
+  /* ─── NAV ─── */
+  .nav {
+    background: var(--white);
+    border-bottom: 1px solid var(--gray-200);
+    padding: 0 2rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .logo-placeholder {
+    width: 38px;
+    height: 38px;
+    border-radius: 6px;
+    background: var(--blue-pale);
+    border: 1px solid var(--blue-mid);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .logo-placeholder img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  .logo-placeholder svg { width: 22px; height: 22px; }
+  .nav-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gray-800);
+    line-height: 1.3;
+  }
+  .nav-subtitle {
+    font-size: 11px;
+    color: var(--gray-400);
+    font-weight: 400;
+  }
+  .nav-tabs {
+    display: flex;
+    gap: 4px;
+  }
+  .nav-tab {
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--gray-400);
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .nav-tab:hover { background: var(--gray-100); color: var(--gray-600); }
+  .nav-tab.active {
+    background: var(--blue-pale);
+    color: var(--blue);
+    border-color: var(--blue-mid);
+  }
+
+  /* ─── ADMIN PAGE ─── */
+  .admin-content {
+    flex: 1;
+    max-width: 1000px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 2.5rem 2rem;
+  }
+  .admin-header {
+    margin-bottom: 2rem;
+  }
+  .admin-header h1 {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin-bottom: 4px;
+  }
+  .admin-header p {
+    font-size: 13px;
+    color: var(--gray-400);
+  }
+
+  /* Session info bar */
+  .session-bar {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+  }
+  .session-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .session-label {
+    font-size: 12px;
+    color: var(--gray-400);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 500;
+  }
+  .session-date {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--gray-800);
+  }
+  .session-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--gray-400);
+  }
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--gray-200);
+    transition: background 0.3s;
+  }
+  .status-dot.active { background: var(--green); }
+
+  /* Timers grid */
+  .timers-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .timer-card {
+    background: var(--white);
+    border: 1.5px solid var(--gray-200);
+    border-radius: 14px;
+    padding: 1.75rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .timer-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--gray-200);
+    transition: background 0.2s;
+  }
+  .timer-card.running {
+    border-color: var(--blue-mid);
+    box-shadow: var(--active-shadow);
+  }
+  .timer-card.running::before { background: var(--blue); }
+
+  .timer-list-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray-400);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .timer-card.running .timer-list-name { color: var(--blue); }
+
+  .timer-display {
+    font-size: 48px;
+    font-weight: 300;
+    letter-spacing: -1px;
+    color: var(--gray-800);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .timer-card.running .timer-display { color: var(--blue); font-weight: 400; }
+
+  .timer-controls {
+    display: flex;
+    gap: 8px;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    border: 1px solid var(--gray-200);
+    background: var(--white);
+    color: var(--gray-600);
+    transition: all 0.12s;
+    user-select: none;
+  }
+  .btn:hover { background: var(--gray-100); border-color: var(--gray-400); }
+  .btn:active { transform: scale(0.97); }
+
+  .btn-play {
+    flex: 1;
+    background: var(--blue-pale);
+    border-color: var(--blue-mid);
+    color: var(--blue);
+  }
+  .btn-play:hover { background: var(--blue-mid); }
+
+  .btn-pause {
+    flex: 1;
+    background: var(--gray-800);
+    border-color: var(--gray-800);
+    color: var(--white);
+  }
+  .btn-pause:hover { background: var(--gray-600); border-color: var(--gray-600); }
+
+  .btn-reset {
+    padding: 8px 12px;
+    color: var(--gray-400);
+  }
+  .btn-reset:hover { color: var(--red); border-color: var(--red); background: var(--red-pale); }
+
+  /* Global controls */
+  .global-controls {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .global-label {
+    font-size: 13px;
+    color: var(--gray-400);
+    font-weight: 500;
+  }
+  .global-actions { display: flex; gap: 8px; }
+  .btn-stop-all {
+    background: var(--gray-100);
+    border-color: var(--gray-200);
+    color: var(--gray-600);
+  }
+  .btn-stop-all:hover { background: var(--gray-200); }
+  .btn-reset-all {
+    background: var(--red-pale);
+    border-color: #f5c6c2;
+    color: var(--red);
+  }
+  .btn-reset-all:hover { background: #fad5d2; }
+
+  /* ─── DISPLAY PAGE ─── */
+  #page-display {
+    background: #0d1726;
+    color: var(--white);
+  }
+  .display-nav {
+    background: rgba(255,255,255,0.04);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    padding: 0 2.5rem;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .display-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .display-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .display-logo img { width: 100%; height: 100%; object-fit: contain; }
+  .display-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.85);
+  }
+  .display-subtitle {
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+  }
+  .display-clock {
+    font-size: 14px;
+    color: rgba(255,255,255,0.4);
+    font-variant-numeric: tabular-nums;
+    font-weight: 300;
+  }
+
+  .display-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+  .display-timers {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 1100px;
+  }
+  .display-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 18px;
+    padding: 2.5rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+    text-align: center;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .display-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: rgba(255,255,255,0.1);
+    transition: background 0.3s;
+  }
+  .display-card.running {
+    background: rgba(42, 95, 168, 0.15);
+    border-color: rgba(42, 95, 168, 0.5);
+  }
+  .display-card.running::before { background: #4a8fe8; }
+
+  .display-card-name {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+  }
+  .display-card.running .display-card-name { color: #7ab4f5; }
+
+  .display-card-time {
+    font-size: 72px;
+    font-weight: 200;
+    letter-spacing: -3px;
+    font-variant-numeric: tabular-nums;
+    color: rgba(255,255,255,0.6);
+    line-height: 1;
+  }
+  .display-card.running .display-card-time { color: var(--white); font-weight: 300; }
+
+  .display-card-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    transition: background 0.3s;
+  }
+  .display-card.running .display-card-indicator { background: #4a8fe8; }
+
+  .display-footer {
+    padding: 1rem 2.5rem;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+  }
+  .display-footer-item {
+    font-size: 11px;
+    color: rgba(255,255,255,0.25);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* ─── SVG icons ─── */
+  .icon { display: inline-block; vertical-align: middle; }
+
+  /* ─── Responsive ─── */
+  @media (max-width: 768px) {
+    .timers-grid { grid-template-columns: 1fr; }
+    .display-timers { grid-template-columns: 1fr; }
+    .timer-display { font-size: 40px; }
+    .display-card-time { font-size: 56px; }
+    .nav { padding: 0 1rem; }
+    .admin-content { padding: 1.5rem 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     PAGE ADMIN
+═══════════════════════════════════════ -->
+<div class="page active" id="page-admin">
+  <nav class="nav">
+    <div class="nav-brand">
+      <div class="logo-placeholder" id="logo-admin">
+        <!-- Remplacez src="villementon.png" avec votre logo -->
+        <img src="villementon.png" onerror="this.style.display='none';this.nextElementSibling.style.display='block'" alt="Ville de Menton">
+        <svg style="display:none" viewBox="0 0 24 24" fill="none" stroke="#1a4a8f" stroke-width="1.5">
+          <path d="M3 21V7l9-4 9 4v14M9 21v-6h6v6"/>
+        </svg>
+      </div>
+      <div>
+        <div class="nav-title">Ville de Menton</div>
+        <div class="nav-subtitle">Gestion du temps de parole</div>
+      </div>
+    </div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="showPage('admin')">Interface opérateur</button>
+      <button class="nav-tab" onclick="showPage('display')">Affichage public</button>
+    </div>
+  </nav>
+
+  <div class="admin-content">
+    <div class="admin-header">
+      <h1>Contrôle du temps de parole</h1>
+      <p>Conseil Municipal · Un seul groupe peut être actif à la fois</p>
+    </div>
+
+    <div class="session-bar">
+      <div class="session-info">
+        <span class="session-label">Séance du</span>
+        <span class="session-date" id="session-date"></span>
+      </div>
+      <div class="session-status">
+        <div class="status-dot" id="status-dot"></div>
+        <span id="status-text">En attente</span>
+      </div>
+    </div>
+
+    <div class="timers-grid">
+      <!-- Groupe 1 -->
+      <div class="timer-card" id="card-0">
+        <div class="timer-list-name">Masson pour Menton</div>
+        <div class="timer-display" id="display-0">00:00</div>
+        <div class="timer-controls">
+          <button class="btn btn-play" id="btn-0" onclick="toggleTimer(0)">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><polygon points="3,1 15,8 3,15"/></svg>
+            Démarrer
+          </button>
+          <button class="btn btn-reset" onclick="resetTimer(0)" title="Remettre à zéro">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+              <path d="M2 8a6 6 0 1 0 1.5-3.9"/><path d="M2 2v4h4"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Groupe 2 -->
+      <div class="timer-card" id="card-1">
+        <div class="timer-list-name">L'Union</div>
+        <div class="timer-display" id="display-1">00:00</div>
+        <div class="timer-controls">
+          <button class="btn btn-play" id="btn-1" onclick="toggleTimer(1)">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><polygon points="3,1 15,8 3,15"/></svg>
+            Démarrer
+          </button>
+          <button class="btn btn-reset" onclick="resetTimer(1)" title="Remettre à zéro">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+              <path d="M2 8a6 6 0 1 0 1.5-3.9"/><path d="M2 2v4h4"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Groupe 3 -->
+      <div class="timer-card" id="card-2">
+        <div class="timer-list-name">Menton en Action</div>
+        <div class="timer-display" id="display-2">00:00</div>
+        <div class="timer-controls">
+          <button class="btn btn-play" id="btn-2" onclick="toggleTimer(2)">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><polygon points="3,1 15,8 3,15"/></svg>
+            Démarrer
+          </button>
+          <button class="btn btn-reset" onclick="resetTimer(2)" title="Remettre à zéro">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+              <path d="M2 8a6 6 0 1 0 1.5-3.9"/><path d="M2 2v4h4"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="global-controls">
+      <span class="global-label">Actions globales</span>
+      <div class="global-actions">
+        <button class="btn btn-stop-all" onclick="pauseAll()">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><rect x="2" y="2" width="4" height="12" rx="1"/><rect x="10" y="2" width="4" height="12" rx="1"/></svg>
+          Tout mettre en pause
+        </button>
+        <button class="btn btn-reset-all" onclick="resetAll()">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <path d="M2 8a6 6 0 1 0 1.5-3.9"/><path d="M2 2v4h4"/>
+          </svg>
+          Réinitialiser tout
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE DISPLAY (tablette / écran public)
+═══════════════════════════════════════ -->
+<div class="page" id="page-display">
+  <nav class="display-nav">
+    <div class="display-brand">
+      <div class="display-logo">
+        <img src="villementon.png" onerror="this.style.display='none'" alt="Ville de Menton">
+      </div>
+      <div>
+        <div class="display-title">Ville de Menton</div>
+        <div class="display-subtitle">Conseil Municipal · Temps de parole</div>
+      </div>
+    </div>
+    <div class="display-clock" id="display-clock"></div>
+  </nav>
+
+  <div class="display-content">
+    <div class="display-timers">
+      <div class="display-card" id="dcard-0">
+        <div class="display-card-name">Masson pour Menton</div>
+        <div class="display-card-time" id="ddisplay-0">00:00</div>
+        <div class="display-card-indicator"></div>
+      </div>
+      <div class="display-card" id="dcard-1">
+        <div class="display-card-name">L'Union</div>
+        <div class="display-card-time" id="ddisplay-1">00:00</div>
+        <div class="display-card-indicator"></div>
+      </div>
+      <div class="display-card" id="dcard-2">
+        <div class="display-card-name">Menton en Action</div>
+        <div class="display-card-time" id="ddisplay-2">00:00</div>
+        <div class="display-card-indicator"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="display-footer">
+    <span class="display-footer-item" id="display-session-date"></span>
+    <span class="display-footer-item">Conseil Municipal de Menton</span>
+    <button class="display-footer-item" onclick="showPage('admin')" style="background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.25);font-family:inherit;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;">→ Panneau opérateur</button>
+  </div>
+</div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────────────
+const names = ['Masson pour Menton', "L'Union", 'Menton en Action'];
+let elapsed = [0, 0, 0];       // seconds accumulated
+let startTs  = [0, 0, 0];      // timestamp when current run started
+let running  = [false, false, false];
+let activeIdx = -1;
+let rafId = null;
+
+// ─── FORMAT ──────────────────────────────────────────────────────────────────
+function fmt(sec) {
+  const m = Math.floor(sec / 60).toString().padStart(2, '0');
+  const s = (sec % 60).toString().padStart(2, '0');
+  return m + ':' + s;
+}
+
+// ─── CORE LOGIC ──────────────────────────────────────────────────────────────
+function toggleTimer(idx) {
+  if (running[idx]) {
+    pauseTimer(idx);
+  } else {
+    // Pause all others first
+    for (let i = 0; i < 3; i++) if (i !== idx && running[i]) pauseTimer(i);
+    startTimer(idx);
+  }
+}
+
+function startTimer(idx) {
+  running[idx] = true;
+  startTs[idx] = Date.now() - elapsed[idx] * 1000;
+  activeIdx = idx;
+  updateUI();
+  if (!rafId) tick();
+}
+
+function pauseTimer(idx) {
+  if (!running[idx]) return;
+  elapsed[idx] = Math.floor((Date.now() - startTs[idx]) / 1000);
+  running[idx] = false;
+  if (!running.some(Boolean)) { activeIdx = -1; cancelAnimationFrame(rafId); rafId = null; }
+  updateUI();
+}
+
+function resetTimer(idx) {
+  pauseTimer(idx);
+  elapsed[idx] = 0;
+  updateDisplays();
+  updateUI();
+}
+
+function pauseAll() {
+  for (let i = 0; i < 3; i++) if (running[i]) pauseTimer(i);
+}
+
+function resetAll() {
+  for (let i = 0; i < 3; i++) { pauseTimer(i); elapsed[i] = 0; }
+  updateDisplays();
+  updateUI();
+}
+
+// ─── TICK (rAF for smoothness) ────────────────────────────────────────────────
+function tick() {
+  updateDisplays();
+  rafId = requestAnimationFrame(tick);
+}
+
+function updateDisplays() {
+  const now = Date.now();
+  for (let i = 0; i < 3; i++) {
+    const sec = running[i] ? Math.floor((now - startTs[i]) / 1000) : elapsed[i];
+    const t = fmt(sec);
+    document.getElementById('display-' + i).textContent = t;
+    document.getElementById('ddisplay-' + i).textContent = t;
+  }
+}
+
+// ─── UI STATE UPDATE ──────────────────────────────────────────────────────────
+function updateUI() {
+  const anyRunning = running.some(Boolean);
+  document.getElementById('status-dot').classList.toggle('active', anyRunning);
+  document.getElementById('status-text').textContent = anyRunning
+    ? 'En cours : ' + names[running.indexOf(true)]
+    : 'En attente';
+
+  for (let i = 0; i < 3; i++) {
+    const card  = document.getElementById('card-' + i);
+    const dcard = document.getElementById('dcard-' + i);
+    const btn   = document.getElementById('btn-' + i);
+
+    if (running[i]) {
+      card.classList.add('running');
+      dcard.classList.add('running');
+      btn.className = 'btn btn-pause';
+      btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><rect x="2" y="2" width="4" height="12" rx="1"/><rect x="10" y="2" width="4" height="12" rx="1"/></svg> Pause`;
+    } else {
+      card.classList.remove('running');
+      dcard.classList.remove('running');
+      btn.className = 'btn btn-play';
+      btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><polygon points="3,1 15,8 3,15"/></svg> Démarrer`;
+    }
+  }
+}
+
+// ─── ROUTER ───────────────────────────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach((t, i) => {
+    t.classList.toggle('active', (i === 0 && name === 'admin') || (i === 1 && name === 'display'));
+  });
+}
+
+// ─── DATE / CLOCK ─────────────────────────────────────────────────────────────
+function initDate() {
+  const now = new Date();
+  const opts = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+  const ds = now.toLocaleDateString('fr-FR', opts);
+  document.getElementById('session-date').textContent = ds;
+  document.getElementById('display-session-date').textContent = 'Séance du ' + ds;
+}
+
+function tickClock() {
+  const now = new Date();
+  const hh = now.getHours().toString().padStart(2,'0');
+  const mm = now.getMinutes().toString().padStart(2,'0');
+  const ss = now.getSeconds().toString().padStart(2,'0');
+  const el = document.getElementById('display-clock');
+  if (el) el.textContent = hh + ':' + mm + ':' + ss;
+  setTimeout(tickClock, 1000);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+initDate();
+tickClock();
+</script>
+</body>
+</html>
